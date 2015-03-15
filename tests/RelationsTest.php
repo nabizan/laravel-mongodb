@@ -297,6 +297,37 @@ class RelationsTest extends TestCase {
         $this->assertEquals($user->_id, $group->users()->first()->_id);
     }
 
+    public function testBelongsToManyAttachArray()
+    {
+        $user = User::create(array('name' => 'John Doe'));
+
+        $client1 = Client::create(array('name' => 'Test 1'))->_id;
+        $client2 = Client::create(array('name' => 'Test 2'))->_id;
+
+        $user->clients()->attach([$client1, $client2]);
+        $this->assertCount(2, $user->clients);
+    }
+
+    public function testBelongsToManySyncAlreadyPresent()
+    {
+        $user = User::create(array('name' => 'John Doe'));
+
+        $client1 = Client::create(array('name' => 'Test 1'))->_id;
+        $client2 = Client::create(array('name' => 'Test 2'))->_id;
+
+        $user->clients()->sync([$client1, $client2]);
+        $this->assertCount(2, $user->clients);
+
+        $user = User::where('name', '=', 'John Doe')->first();
+        $user->clients()->sync([$client1]);
+        // get right number?!? but leave collection messy
+        $this->assertCount(1, $user->clients);
+
+        // actual wrong entries
+        $user = User::where('name', '=', 'John Doe')->first()->toArray();
+        $this->assertCount(1, $user['client_ids']);
+    }
+
     public function testMorph()
     {
         $user = User::create(array('name' => 'John Doe'));
